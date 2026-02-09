@@ -1,58 +1,46 @@
 async function trackWallet() {
-    const address = document.getElementById("walletInput").value.trim();
-    if (!address) return alert("Please enter a Solana address.");
+    const address = document.getElementById('walletInput').value;
+    const loader = document.getElementById('loader');
 
-    const loader = document.getElementById("loader");
-    const tokenBody = document.getElementById("tokenTableBody");
-    const totalDisplay = document.getElementById("totalPortfolioValue");
+    if (address.length < 10) { alert("Invalid Solana Address"); return; }
 
-    loader.style.display = "block";
-    tokenBody.innerHTML = "";
-    totalDisplay.innerText = "SYNCING...";
+    // UI Updates
+    loader.style.display = 'block';
+    document.getElementById('tokenTableBody').innerHTML = '';
 
     try {
-        // Calling your Python API endpoint
-        const response = await fetch(`/api/scan/${address}`);
-        const result = await response.json();
+        // Call Python Backend
+        const response = await fetch(`/api/scan?wallet=${address}`);
+        const data = await response.json();
 
-        loader.style.display = "none";
-        let grandTotal = 0;
+        // Update Total Value
+        document.getElementById('totalPortfolioValue').innerText = "$" + data.total_value.toLocaleString();
 
-        if (!result.data || result.data.length === 0) {
-            tokenBody.innerHTML = "<tr><td colspan='4' style='text-align:center'>No assets found in this wallet.</td></tr>";
-            totalDisplay.innerText = "$0.00";
-            return;
-        }
-
-        result.data.forEach(t => {
-            const amount = t.tokenAmount.uiAmount || 0;
-            const price = t.priceUsdt || 0;
-            const val = amount * price;
-            grandTotal += val;
-
-            tokenBody.innerHTML += `
-                <tr>
-                    <td><strong>${t.tokenSymbol || 'SPL'}</strong></td>
-                    <td>${amount.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
-                    <td>$${price.toFixed(4)}</td>
-                    <td style="color:#00f2ff; font-weight:bold">$${val.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                </tr>`;
+        // Populate Tokens
+        const tbody = document.getElementById('tokenTableBody');
+        data.tokens.forEach(token => {
+            const row = `<tr>
+                <td><b style="color:#fff">${token.symbol}</b></td>
+                <td>${token.balance.toLocaleString()}</td>
+                <td>$${token.price}</td>
+                <td style="color:#0aff0a; font-weight:bold">$${token.value.toLocaleString()}</td>
+            </tr>`;
+            tbody.innerHTML += row;
         });
 
-        totalDisplay.innerText = `$${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-
-    } catch (err) {
-        console.error(err);
-        loader.innerText = "CONNECTION ERROR: Check backend status.";
+    } catch (error) {
+        alert("Scan Failed. Check Wallet Address.");
+    } finally {
+        loader.style.display = 'none';
     }
 }
 
 function quickTrack(name) {
-    const map = {
-        'Ansem': '4ACfpUFoaSD9bfPdeu6DBt89gB6ENTeHBXCAi87NhDEE',
-        'Legend': 'D2L6yPZ2FmmmTKPgzaMKdhu6EWZcTpLy1Vhx8uvZe7NZ'
+    // Demo Whale Addresses for instant show
+    const whales = {
+        'Ansem': '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1',
+        'Legend': '8dtuyskTtsB78DFDPWZszarvDpedwftKYCoMdZwjHbxy'
     };
-    document.getElementById("walletInput").value = map[name] || name;
+    document.getElementById('walletInput').value = whales[name];
     trackWallet();
 }
-
