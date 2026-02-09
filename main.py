@@ -1,60 +1,46 @@
 import os
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask, request, render_template
 from telebot import TeleBot
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- CONFIGURATION ---
+# Config
 TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ADMIN_ID = os.getenv('ADMIN_ID')
+VIP_CHANNEL = os.getenv('VIP_CHANNEL_ID')
 SOLSCAN_KEY = os.getenv('SOLSCAN_API_KEY')
+
+# Initialize
 bot = TeleBot(TOKEN)
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# --- TELEGRAM COMMANDS ---
-@bot.message_handler(commands=['start'])
-def start(message):
-    bot.reply_to(message, "🧊 *ICEGOD MONITOR ACTIVE*\nInstitutional Grade Solana Tracking Ready.", parse_mode='Markdown')
+# --- ROUTES FOR DASHBOARD ---
+@app.route('/')
+def dashboard():
+    return render_template('index.html')
 
-@bot.message_handler(commands=['scan'])
-def scan_wallet(message):
-    address = message.text.split()[1] if len(message.text.split()) > 1 else None
-    if not address:
-        return bot.reply_to(message, "Usage: /scan [address]")
-
-    bot.send_message(message.chat.id, f"🔍 Scanning Solana Mainnet for `{address}`...", parse_mode='Markdown')
-
-    try:
-        url = f"https://pro-api.solscan.io/v2/account/tokens?address={address}"
-        headers = {"token": SOLSCAN_KEY}
-        res = requests.get(url, headers=headers).json()
-
-        tokens = res.get('data', [])[:5] # Show top 5
-        report = f"📊 *Wallet Report:* `{address[:6]}...`\n\n"
-        for t in tokens:
-            report += f"• *{t['tokenSymbol']}:* {round(t['tokenAmount']['uiAmount'], 2)}\n"
-
-        bot.send_message(message.chat.id, report, parse_mode='Markdown')
-    except Exception as e:
-        bot.send_message(message.chat.id, "❌ Scan failed. Verify API Key.")
-
-# --- HELIUS WEBHOOK ENDPOINT ---
+# --- WEBHOOK FOR WHALE ALERTS ---
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.json
-    for tx in data:
-        msg = f"🚀 *WHALE MOVE DETECTED*\n\nAction: {tx.get('description')}\n[View on Solscan](https://solscan.io/tx/{tx.get('signature')})"
+    events = request.json
+    for event in events:
+        msg = f"🚀 *WHALE ALERT*\n{event.get('description')}\n[Solscan](https://solscan.io/tx/{event.get('signature')})"
         bot.send_message(ADMIN_ID, msg, parse_mode='Markdown')
+        bot.send_message(VIP_CHANNEL, msg, parse_mode='Markdown')
     return "OK", 200
 
-# --- RUNNER ---
+# API for Dashboard to Scan
+@app.route('/api/scan/<address>')
+def api_scan(address):
+    url = f"https://pro-api.solscan.io/v2/account/tokens?address={address}"
+    headers = {"token": SOLSCAN_KEY}
+    return requests.get(url, headers=headers).json()
+
 if __name__ == "__main__":
-    # Start Telegram Polling in background
     import threading
     threading.Thread(target=bot.infinity_polling).start()
-    # Start Webserver for Render/Helius
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
