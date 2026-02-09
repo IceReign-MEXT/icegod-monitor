@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICEGOD | Solana Monitor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>WHALE WATCH</h3>
+                <span class="live-indicator">LIVE</span>
+            </div>
+            <div class="whale-list">
+                <div class="whale-item" onclick="quickTrack('Ansem')">
+                    <span>🧠 Ansem</span>
+                    <small>Top Tier Strategist</small>
+                </div>
+                <div class="whale-item" onclick="quickTrack('Legend')">
+                    <span>🐋 Solana Legend</span>
+                    <small>High Stakes Whale</small>
+                </div>
+            </div>
+            <div class="promo-box">
+                <p>Unlock 50+ Wallets with <strong>ICEGOD PRO</strong></p>
+                <button class="pro-btn">UPGRADE</button>
+            </div>
+        </aside>
+
+        <main class="dashboard">
+            <header>
+                <h1>ICEGOD <span>MONITOR</span></h1>
+                <p>High-Speed Wallet Intelligence</p>
+            </header>
+
+            <section class="total-value-section">
+                <small>PORTFOLIO NET WORTH</small>
+                <h2 id="totalPortfolioValue">$0.00</h2>
+            </section>
+
+            <div class="search-container">
+                <input id="walletInput" type="text" placeholder="Paste Solana Address..." />
+                <button onclick="trackWallet()">SCAN NETWORK</button>
+            </div>
+
+            <div id="loader" class="loader" style="display:none;">SYNCHRONIZING...</div>
+
+            <div class="section-container">
+                <h3>Token Holdings</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Balance</th>
+                                <th>Price</th>
+                                <th>Value (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tokenTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-container">
+                <h3>Recent Activity</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Signature</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
