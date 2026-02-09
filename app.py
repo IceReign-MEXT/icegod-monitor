@@ -21,7 +21,7 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     print("🛰️ UPTIME PING: System Awake.")
-    return "<h1>ICEGOD MONITOR ONLINE</h1><p>System is listening...</p>"
+    return "<h1>ICEGOD MONITOR ONLINE</h1>"
 
 # --- HELIUS WEBHOOK RECEIVER ---
 @app.route('/webhook', methods=['POST'])
@@ -44,7 +44,7 @@ def webhook():
 # --- BOT COMMANDS ---
 @bot.message_handler(commands=['start'])
 def start_msg(message):
-    bot.reply_to(message, "🧊 *ICEGOD MONITOR ONLINE*\nListening for whale activity...")
+    bot.reply_to(message, "🧊 *ICEGOD MONITOR ONLINE*\nListening...")
 
 @bot.message_handler(commands=['p', 'price'])
 def get_price(message):
@@ -57,23 +57,27 @@ def get_price(message):
         msg = f"📊 *{pair['baseToken']['symbol']}*\nPrice: `${pair['priceUsd']}`\nMCap: `{mcap_str}`\n[Chart]({pair['url']})"
         bot.reply_to(message, msg, parse_mode='Markdown')
     except:
-        bot.reply_to(message, "❌ Use: `/p SOL` or check token name.")
+        bot.reply_to(message, "❌ Use: `/p SOL`")
 
 # --- ENGINE ---
 def run_bot():
-    print("🤖 SYSTEM: Starting Telegram Bot Thread...")
+    print("🤖 SYSTEM: Clearing old sessions...")
+    # This prevents the 409 Conflict error on Render
+    bot.remove_webhook()
+    time.sleep(1)
+    print("✅ SYSTEM: Bot thread starting...")
     while True:
         try:
-            bot.remove_webhook()
             bot.polling(none_stop=True, interval=0, timeout=20)
         except Exception as e:
-            print(f"⚠️ Bot Restarting: {e}")
+            print(f"⚠️ Restarting: {e}")
             time.sleep(5)
 
 if __name__ == "__main__":
-    # Start bot thread
-    threading.Thread(target=run_bot, daemon=True).start()
-    # Run Flask
+    # Ensure bot only starts in the main worker
+    if not os.environ.get("WERKZEUG_RUN_MAIN"):
+        threading.Thread(target=run_bot, daemon=True).start()
+
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
